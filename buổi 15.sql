@@ -1,3 +1,4 @@
+EX2 
 WITH
   card_launch AS (
   SELECT 
@@ -15,7 +16,7 @@ SELECT
 FROM card_launch
 WHERE issue_date = launch_date
 ORDER BY issued_amount DESC;
-
+EX1 
 WITH yearly_spend_cte AS (
   SELECT 
     EXTRACT(YEAR FROM transaction_date) AS yr,
@@ -41,7 +42,7 @@ SELECT
 FROM yearly_spend_cte
 WHERE prev_year_spend IS NOT NULL
 ORDER BY product_id, yr;
-
+EX3 
 WITH trans_num AS (
   SELECT 
     user_id, 
@@ -86,6 +87,43 @@ select
    rows between  2 PRECEDING AND CURRENT ROW)
   ,2) as rolling_avg_3d
 from tweets;
+EX7
+WITH ranked_spending_cte AS (
+  SELECT 
+    category, 
+    product, 
+    SUM(spend) AS total_spend,
+    RANK() OVER (
+      PARTITION BY category 
+      ORDER BY SUM(spend) DESC) AS ranking 
+  FROM product_spend
+  WHERE EXTRACT(YEAR FROM transaction_date) = 2022
+  GROUP BY category, product
+)
+SELECT 
+  category, 
+  product, 
+  total_spend 
+FROM ranked_spending_cte 
+WHERE ranking <= 2 
+ORDER BY category, ranking;
+EX8 
+WITH top_10_cte AS (
+  SELECT 
+    artists.artist_name,
+    DENSE_RANK() OVER (
+      ORDER BY COUNT(songs.song_id) DESC) AS artist_rank
+  FROM artists
+  INNER JOIN songs
+    ON artists.artist_id = songs.artist_id
+  INNER JOIN global_song_rank AS ranking
+    ON songs.song_id = ranking.song_id
+  WHERE ranking.rank <= 10
+  GROUP BY artists.artist_name
+)
 
+SELECT artist_name, artist_rank
+FROM top_10_cte
+WHERE artist_rank <= 5;
 
 
